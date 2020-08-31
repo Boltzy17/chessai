@@ -20,12 +20,14 @@ class Environment:
             prom = move[4]
         if self.game.move(pos, new_pos, prom = prom):
             self.move_list.append(move)
+            return True
         else:
             print("Invalid move")
+            return False
 
     def get_possible_moves(self):
         self.possible_moves = []
-        for piece in [obj for obj in self.game.squares.flatten() if obj]:
+        for piece in [obj for obj in self.game.get_board().flatten() if obj]:
             for i in range(8):
                 for j in range(8):
                     if piece.can_move((i, j)) and piece.get_colour() == self.game.on_move:
@@ -51,11 +53,12 @@ class Environment:
         y = square[1] + 1
         return str(x) + str(y)
 
+    def step(self, move):
+        if self.game.move(move[0], move[1], prom = None):
+            self.move_list.append(move)
+            return True
+        else:
+            print("Invalid move")
+            return False
 
-env = Environment()
-env.get_possible_moves()
-env.print_possible_moves()
-env.move("a2a4")
-env.get_possible_moves()
-env.print_possible_moves()
 

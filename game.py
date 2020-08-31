@@ -127,3 +127,6 @@ class Game:
             return Bishop(self, self.on_move, pos)
         if piece == "n":
             return Knight(self, self.on_move, pos)
+
+    def get_board(self):
+        return self.squares
