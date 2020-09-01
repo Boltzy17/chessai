@@ -41,7 +41,7 @@ class Game:
         self.squares[3][7] = Queen(self, -1, (3, 7))
         self.squares[4][7] = King(self, -1, (4, 7))
 
-    def move(self, pos, new_pos, prom = None):
+    def move(self, pos, new_pos, prom=None):
         x, y = pos
         pawn = isinstance(self.squares[x][y], Pawn)
         if prom:
@@ -68,7 +68,9 @@ class Game:
                         # en passent rules
                         if pawn and self.en_passent == new_pos:
                             # take the pawn
-                            self.squares[nx][ny - self.squares[x][y].get_colour()] = None
+                            self.squares[nx][
+                                ny - self.squares[x][y].get_colour()
+                            ] = None
                         if pawn and abs(ny - y) == 2:
                             self.en_passent = (x, ny - self.squares[x][y].get_colour())
                         else:

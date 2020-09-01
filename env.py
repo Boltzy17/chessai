@@ -18,7 +18,7 @@ class Environment:
         prom = None
         if len(move) == 5:
             prom = move[4]
-        if self.game.move(pos, new_pos, prom = prom):
+        if self.game.move(pos, new_pos, prom=prom):
             self.move_list.append(move)
             return True
         else:
@@ -30,12 +30,15 @@ class Environment:
         for piece in [obj for obj in self.game.get_board().flatten() if obj]:
             for i in range(8):
                 for j in range(8):
-                    if piece.can_move((i, j)) and piece.get_colour() == self.game.on_move:
+                    if (
+                        piece.can_move((i, j))
+                        and piece.get_colour() == self.game.on_move
+                    ):
                         self.possible_moves.append((piece.get_pos(), (i, j)))
 
     def string_to_pos(self, square):
         print(square)
-        x = ord(square[0]) - ord('a')
+        x = ord(square[0]) - ord("a")
         y = int(square[1]) - 1
         return x, y
 
@@ -49,16 +52,14 @@ class Environment:
         print(poss_moves)
 
     def pos_to_string(self, square):
-        x = chr(square[0] + ord('a'))
+        x = chr(square[0] + ord("a"))
         y = square[1] + 1
         return str(x) + str(y)
 
     def step(self, move):
-        if self.game.move(move[0], move[1], prom = None):
+        if self.game.move(move[0], move[1], prom=None):
             self.move_list.append(move)
             return True
         else:
             print("Invalid move")
             return False
-
-

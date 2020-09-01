@@ -243,7 +243,9 @@ class King(Piece):
             else:
                 if nx > x:
                     for piece in [obj for obj in self.board.squares.flatten() if obj]:
-                        if piece.get_colour() != self.colour and (piece.can_move((5, y)) or piece.can_move((nx, ny))):
+                        if piece.get_colour() != self.colour and (
+                            piece.can_move((5, y)) or piece.can_move((nx, ny))
+                        ):
                             return False
                     if not self.board.squares[5][y] and self.board.squares[7][y]:
                         if self.board.squares[6][y]:
@@ -256,13 +258,15 @@ class King(Piece):
                         return False
                 else:
                     for piece in [obj for obj in self.board.squares.flatten() if obj]:
-                        if piece.get_colour() != self.colour and (piece.can_move((5, y)) or piece.can_move((nx, ny))):
+                        if piece.get_colour() != self.colour and (
+                            piece.can_move((5, y)) or piece.can_move((nx, ny))
+                        ):
                             return False
                     if not self.board.squares[3][y] and self.board.squares[0][y]:
                         if self.board.squares[2][y]:
                             return (
-                                    self.board.squares[nx][ny].get_colour() != self.colour
-                                    and not self.board.squares[0][y].moved
+                                self.board.squares[nx][ny].get_colour() != self.colour
+                                and not self.board.squares[0][y].moved
                             )
                         return not self.board.squares[0][y].moved
                     else:
