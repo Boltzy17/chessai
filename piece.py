@@ -20,12 +20,14 @@ class Piece(abc.ABC):
     def get_colour(self):
         return self.colour
 
-    @abc.abstractmethod
-    def type(self):
-        pass
+    @property
+    def colour_str(self):
+        if self.colour == 1:
+            return "w"
+        return "b"
 
     @abc.abstractmethod
-    def __repr__(self):
+    def type(self):
         pass
 
     @abc.abstractmethod
@@ -37,18 +39,14 @@ class Pawn(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
 
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"pawn_{col}"
-
     def can_move(self, new_pos):
         x, y = self.pos
         nx, ny = new_pos
-        # if the distance is too far
-        if abs(nx - x) > 1 or abs(ny - y) > 2 or ny - (y * self.colour) < 1:
+        # if the distance is too far or too short
+        if abs(nx - x) > 1 or abs(ny - y) > 2 or ny == y:
+            return False
+        # pawn tries to move in the wrong direction
+        if (ny - y < 0) != (self.colour < 0) or (ny - y > 0) != (self.colour > 0):
             return False
         # if pawn tries to capture
         if x != nx:
@@ -61,16 +59,14 @@ class Pawn(Piece):
                     return self.board.squares[nx][ny].get_colour() != self.colour
             return False
         if abs(ny - y) == 2:
-            if y == 1:
-                # check whether a piece is already in the new position or the square you skip
+            # check whether a piece is already in the new position or the square you skip
+            if y == 1 or y == 6:
                 return not (
-                    self.board.squares[nx][ny] or self.board.squares[nx][ny - 1]
+                    self.board.squares[nx][ny]
+                    or self.board.squares[nx][ny - self.colour]
                 )
-            if y == 6:
-                # check whether a piece is already in the new position or the square you skip
-                return not (
-                    self.board.squares[nx][ny] or self.board.squares[nx][ny + 1]
-                )
+            else:
+                return False
         # check whether a piece is already in the new position
         return not self.board.squares[nx][ny]
 
@@ -82,13 +78,6 @@ class Pawn(Piece):
 class Knight(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
-
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"knight_{col}"
 
     def can_move(self, new_pos):
         x, y = self.pos
@@ -112,13 +101,6 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
-
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"bishop_{col}"
 
     def can_move(self, new_pos):
         x, y = self.pos
@@ -155,13 +137,6 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
-
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"rook_{col}"
 
     def can_move(self, new_pos):
         x, y = self.pos
@@ -202,13 +177,6 @@ class Queen(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
 
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"queen_{col}"
-
     def can_move(self, new_pos):
         x, y = self.pos
         nx, ny = new_pos
@@ -248,53 +216,58 @@ class King(Piece):
     def __init__(self, board, colour, pos):
         super().__init__(board, colour, pos)
 
-    def __repr__(self):
-        if self.colour == 1:
-            col = "w"
-        else:
-            col = "b"
-        return f"king_{col}"
-
     def can_move(self, new_pos):
         x, y = self.pos
         nx, ny = new_pos
         # check distance
         if abs(ny - y) > 1 or abs(nx - x) > 2:
             return False
-        if abs(nx - x) == 2 and ny == y:
-            if self.moved or self.board.in_check:
-                return False
-            else:
-                if nx > x:
-                    for piece in [obj for obj in self.board.squares.flatten() if obj]:
-                        if piece.get_colour() != self.colour and (
-                            piece.can_move((5, y)) or piece.can_move((nx, ny))
-                        ):
-                            return False
-                    if not self.board.squares[5][y] and self.board.squares[7][y]:
-                        if self.board.squares[6][y]:
-                            return (
-                                self.board.squares[nx][ny].get_colour() != self.colour
-                                and not self.board.squares[7][y].moved
-                            )
-                        return not self.board.squares[7][y].moved
-                    else:
-                        return False
+        if abs(nx - x) == 2:
+            if ny == y:
+                if self.moved or self.board.in_check:
+                    return False
                 else:
-                    for piece in [obj for obj in self.board.squares.flatten() if obj]:
-                        if piece.get_colour() != self.colour and (
-                            piece.can_move((5, y)) or piece.can_move((nx, ny))
-                        ):
+                    if nx > x:
+                        for piece in [
+                            obj for obj in self.board.squares.flatten() if obj
+                        ]:
+                            if piece.get_colour() != self.colour and (
+                                piece.can_move((5, y)) or piece.can_move((nx, ny))
+                            ):
+                                return False
+                        if not self.board.squares[5][y] and self.board.squares[7][y]:
+                            if self.board.squares[6][y]:
+                                if self.board.squares[nx][ny]:
+                                    return (
+                                        self.board.squares[nx][ny].get_colour()
+                                        != self.colour
+                                        and not self.board.squares[7][y].moved
+                                    )
+                                else:
+                                    return not self.board.squares[7][y].moved
+                            return not self.board.squares[7][y].moved
+                        else:
                             return False
-                    if not self.board.squares[3][y] and self.board.squares[0][y]:
-                        if self.board.squares[2][y]:
-                            return (
-                                self.board.squares[nx][ny].get_colour() != self.colour
-                                and not self.board.squares[0][y].moved
-                            )
-                        return not self.board.squares[0][y].moved
                     else:
-                        return False
+                        for piece in [
+                            obj for obj in self.board.squares.flatten() if obj
+                        ]:
+                            if piece.get_colour() != self.colour and (
+                                piece.can_move((5, y)) or piece.can_move((nx, ny))
+                            ):
+                                return False
+                        if not self.board.squares[3][y] and self.board.squares[0][y]:
+                            if self.board.squares[nx][y]:
+                                return (
+                                    self.board.squares[nx][ny].get_colour()
+                                    != self.colour
+                                    and not self.board.squares[0][y].moved
+                                )
+                            return not self.board.squares[0][y].moved
+                        else:
+                            return False
+            else:
+                return False
 
         # check if same square
         if nx == x and ny == y:

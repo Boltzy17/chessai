@@ -43,58 +43,21 @@ class Board:
 
     def move(self, pos, new_pos, prom=None):
         x, y = pos
-        type = self.squares[x][y].type
-        if prom:
-            if new_pos[1] != 7 or type != "p":
-                print("Cannot promote piece!")
-                return False
-        else:
-            if type == "p" and new_pos[1] == 7:
-                prom = "q"
         if self.squares[x][y]:
             if self.squares[x][y].get_colour() == self.on_move:
                 if self.squares[x][y].can_move(new_pos):
                     nx, ny = new_pos
-                    castle = None
-                    if type == "k" and abs(nx - x) == 2:
-                        castle = nx - x
                     copy = self.squares.copy()
-                    # en passent rules
-                    if type == "p" and self.en_passent == new_pos:
-                        # take the pawn
-                        copy[nx][ny - copy[x][y].get_colour()] = None
-                    # move the piece
-                    copy[nx][ny] = copy[x][y]
-                    copy[nx][ny].set_pos(new_pos)
-                    copy[x][y] = None
+                    copy = self.do_move(copy, pos, new_pos, prom)
                     if self.check_safe_king(copy):
                         # en passent rules
-                        if type == "p" and self.en_passent == new_pos:
-                            # take the pawn
-                            self.squares[nx][
-                                ny - self.squares[x][y].get_colour()
-                            ] = None
-                        if type == "p" and abs(ny - y) == 2:
-                            self.en_passent = (x, ny - self.squares[x][y].get_colour())
-                        else:
-                            self.en_passent = None
-                        # move the piece
-                        if prom:
-                            self.squares[nx][ny] = self.get_prom_piece(prom, new_pos)
-                        else:
-                            self.squares[nx][ny] = self.squares[x][y]
-                        if castle:
-                            if castle < 0:
-                                self.squares[nx + 1][ny] = self.squares[0][y]
-                                self.squares[0][y] = None
-                            else:
-                                self.squares[nx - 1][ny] = self.squares[7][y]
-                                self.squares[7][y] = None
-                        self.squares[nx][ny].set_pos(new_pos)
-                        self.squares[nx][ny].set_moved()
-                        self.squares[x][y] = None
+                        if self.squares[x][y].type == "p" and abs(ny - y) == 2:
+                            self.en_passent = (x, y - self.squares[x][y].get_colour())
+                        self.squares = self.do_move(self.squares, pos, new_pos, prom)
                         self.on_move *= -1
-                        print(f"Move successful! piece {self.squares[nx][ny]}")
+                        print(
+                            f"Move successful! piece {self.squares[nx][ny].type} {self.squares[nx][ny].colour_str}"
+                        )
                         self.after_move()
                         return True
                     else:
@@ -106,6 +69,49 @@ class Board:
         else:
             print("No piece on starting square")
         return False
+
+    def do_move(self, board, pos, new_pos, prom):
+        x, y = pos
+        nx, ny = new_pos
+        p_type = board[x][y].type
+
+        # promotion rules
+        if prom:
+            if new_pos[1] != 7 or p_type != "p":
+                print("Cannot promote piece!")
+                return False
+        else:
+            if p_type == "p" and new_pos[1] == 7:
+                prom = "q"
+
+        # en passent rules
+        if p_type == "p" and self.en_passent == new_pos:
+            # take the pawn
+            board[nx][ny - board[x][y].get_colour()] = None
+
+        if prom:
+            board[nx][ny] = self.get_prom_piece(prom, new_pos)
+        else:
+            board[nx][ny] = board[x][y]
+
+        # castle rules
+        castle = None
+        if p_type == "k" and abs(nx - x) == 2:
+            castle = nx - x
+        if castle:
+            if castle < 0:
+                board[nx + 1][ny] = board[0][y]
+                board[nx + 1][ny].set_pos((nx + 1, ny))
+                board[0][y] = None
+            else:
+                board[nx - 1][ny] = board[7][y]
+                board[nx - 1][ny].set_pos((nx - 1, ny))
+                board[7][y] = None
+        # move the piece
+        board[nx][ny] = board[x][y]
+        board[nx][ny].set_pos(new_pos)
+        board[x][y] = None
+        return board
 
     def check_safe_king(self, board):
         for piece in [obj for obj in board.flatten() if obj]:
@@ -142,3 +148,7 @@ class Board:
 
     def get_board(self):
         return self.squares
+
+    @property
+    def check(self):
+        return self.in_check
