@@ -3,7 +3,7 @@ from piece import Pawn, Knight, Bishop, Rook, Queen, King
 
 
 # White = 1, Black = -1
-class Game:
+class Board:
     def __init__(self):
         self.squares = np.empty((8, 8), dtype=object)
         self.in_check = False
@@ -43,21 +43,24 @@ class Game:
 
     def move(self, pos, new_pos, prom=None):
         x, y = pos
-        pawn = isinstance(self.squares[x][y], Pawn)
+        type = self.squares[x][y].type
         if prom:
-            if new_pos[1] != 7 or not pawn:
+            if new_pos[1] != 7 or type != "p":
                 print("Cannot promote piece!")
                 return False
         else:
-            if pawn and new_pos[1] == 7:
+            if type == "p" and new_pos[1] == 7:
                 prom = "q"
         if self.squares[x][y]:
             if self.squares[x][y].get_colour() == self.on_move:
                 if self.squares[x][y].can_move(new_pos):
                     nx, ny = new_pos
+                    castle = None
+                    if type == "k" and abs(nx - x) == 2:
+                        castle = nx - x
                     copy = self.squares.copy()
                     # en passent rules
-                    if pawn and self.en_passent == new_pos:
+                    if type == "p" and self.en_passent == new_pos:
                         # take the pawn
                         copy[nx][ny - copy[x][y].get_colour()] = None
                     # move the piece
@@ -66,12 +69,12 @@ class Game:
                     copy[x][y] = None
                     if self.check_safe_king(copy):
                         # en passent rules
-                        if pawn and self.en_passent == new_pos:
+                        if type == "p" and self.en_passent == new_pos:
                             # take the pawn
                             self.squares[nx][
                                 ny - self.squares[x][y].get_colour()
                             ] = None
-                        if pawn and abs(ny - y) == 2:
+                        if type == "p" and abs(ny - y) == 2:
                             self.en_passent = (x, ny - self.squares[x][y].get_colour())
                         else:
                             self.en_passent = None
@@ -80,11 +83,18 @@ class Game:
                             self.squares[nx][ny] = self.get_prom_piece(prom, new_pos)
                         else:
                             self.squares[nx][ny] = self.squares[x][y]
+                        if castle:
+                            if castle < 0:
+                                self.squares[nx + 1][ny] = self.squares[0][y]
+                                self.squares[0][y] = None
+                            else:
+                                self.squares[nx - 1][ny] = self.squares[7][y]
+                                self.squares[7][y] = None
                         self.squares[nx][ny].set_pos(new_pos)
                         self.squares[nx][ny].set_moved()
                         self.squares[x][y] = None
                         self.on_move *= -1
-                        print(f"Move succesful! piece {self.squares[nx][ny]}")
+                        print(f"Move successful! piece {self.squares[nx][ny]}")
                         self.after_move()
                         return True
                     else:

@@ -1,11 +1,12 @@
-from game import Game
+from board import Board
 
 
-class Environment:
+class ChessEnvironment:
     def __init__(self):
-        self.game = Game()
+        super().__init__()
+        self.game = Board()
         self.move_list = []
-        self.possible_moves = []
+        self.possible_moves = []  # in the form pos, new_pos, prom
 
     def new_game(self):
         self.game.reset_board()
@@ -34,10 +35,15 @@ class Environment:
                         piece.can_move((i, j))
                         and piece.get_colour() == self.game.on_move
                     ):
-                        self.possible_moves.append((piece.get_pos(), (i, j)))
+                        if piece.type == "p" and j == 7:
+                            self.possible_moves.append((piece.get_pos(), (i, j), "q"))
+                            self.possible_moves.append((piece.get_pos(), (i, j), "r"))
+                            self.possible_moves.append((piece.get_pos(), (i, j), "b"))
+                            self.possible_moves.append((piece.get_pos(), (i, j), "n"))
+                        else:
+                            self.possible_moves.append((piece.get_pos(), (i, j), ""))
 
     def string_to_pos(self, square):
-        print(square)
         x = ord(square[0]) - ord("a")
         y = int(square[1]) - 1
         return x, y
@@ -47,7 +53,8 @@ class Environment:
         for move in self.possible_moves:
             start = self.pos_to_string(move[0])
             end = self.pos_to_string(move[1])
-            new_move = start + end
+            prom = move[2]
+            new_move = start + end + prom
             poss_moves.append(new_move)
         print(poss_moves)
 
@@ -56,10 +63,9 @@ class Environment:
         y = square[1] + 1
         return str(x) + str(y)
 
-    def step(self, move):
-        if self.game.move(move[0], move[1], prom=None):
-            self.move_list.append(move)
-            return True
-        else:
-            print("Invalid move")
-            return False
+    # ****GUI****
+
+    def show_env(self):
+        pass
+
+    # *********** NN functions ************

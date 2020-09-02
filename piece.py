@@ -21,6 +21,10 @@ class Piece(abc.ABC):
         return self.colour
 
     @abc.abstractmethod
+    def type(self):
+        pass
+
+    @abc.abstractmethod
     def __repr__(self):
         pass
 
@@ -44,7 +48,7 @@ class Pawn(Piece):
         x, y = self.pos
         nx, ny = new_pos
         # if the distance is too far
-        if abs(nx - x) > 1 or abs(ny - y) > 2 or abs(ny - y) < 1:
+        if abs(nx - x) > 1 or abs(ny - y) > 2 or ny - (y * self.colour) < 1:
             return False
         # if pawn tries to capture
         if x != nx:
@@ -70,6 +74,10 @@ class Pawn(Piece):
         # check whether a piece is already in the new position
         return not self.board.squares[nx][ny]
 
+    @property
+    def type(self):
+        return "p"
+
 
 class Knight(Piece):
     def __init__(self, board, colour, pos):
@@ -87,7 +95,7 @@ class Knight(Piece):
         nx, ny = new_pos
         if abs(nx - x) > 2 or abs(ny - y) > 2:
             return False
-        # return whether there is an L shape
+        # is there an L shape
         if (abs(nx - x) == 2 and abs(ny - y) == 1) or (
             abs(nx - x) == 1 and abs(ny - y) == 2
         ):
@@ -95,6 +103,10 @@ class Knight(Piece):
             if self.board.squares[nx][ny]:
                 return self.board.squares[nx][ny].get_colour() != self.colour
             return True
+
+    @property
+    def type(self):
+        return "n"
 
 
 class Bishop(Piece):
@@ -134,6 +146,10 @@ class Bishop(Piece):
         if self.board.squares[nx][ny]:
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
+
+    @property
+    def type(self):
+        return "b"
 
 
 class Rook(Piece):
@@ -177,6 +193,10 @@ class Rook(Piece):
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
 
+    @property
+    def type(self):
+        return "r"
+
 
 class Queen(Piece):
     def __init__(self, board, colour, pos):
@@ -219,6 +239,10 @@ class Queen(Piece):
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
 
+    @property
+    def type(self):
+        return "q"
+
 
 class King(Piece):
     def __init__(self, board, colour, pos):
@@ -237,7 +261,7 @@ class King(Piece):
         # check distance
         if abs(ny - y) > 1 or abs(nx - x) > 2:
             return False
-        if abs(nx - x) == 2:
+        if abs(nx - x) == 2 and ny == y:
             if self.moved or self.board.in_check:
                 return False
             else:
@@ -279,3 +303,7 @@ class King(Piece):
         if self.board.squares[nx][ny]:
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
+
+    @property
+    def type(self):
+        return "k"
