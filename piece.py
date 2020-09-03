@@ -27,7 +27,11 @@ class Piece(abc.ABC):
         return "b"
 
     @abc.abstractmethod
-    def type(self):
+    def value(self) -> int:
+        pass
+
+    @abc.abstractmethod
+    def type(self) -> str:
         pass
 
     @abc.abstractmethod
@@ -71,6 +75,10 @@ class Pawn(Piece):
         return not self.board.squares[nx][ny]
 
     @property
+    def value(self):
+        return self.colour * 1
+
+    @property
     def type(self):
         return "p"
 
@@ -92,6 +100,10 @@ class Knight(Piece):
             if self.board.squares[nx][ny]:
                 return self.board.squares[nx][ny].get_colour() != self.colour
             return True
+
+    @property
+    def value(self):
+        return self.colour * 3
 
     @property
     def type(self):
@@ -128,6 +140,10 @@ class Bishop(Piece):
         if self.board.squares[nx][ny]:
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
+
+    @property
+    def value(self):
+        return self.colour * 3
 
     @property
     def type(self):
@@ -169,6 +185,10 @@ class Rook(Piece):
         return True
 
     @property
+    def value(self):
+        return self.colour * 5
+
+    @property
     def type(self):
         return "r"
 
@@ -208,6 +228,10 @@ class Queen(Piece):
         return True
 
     @property
+    def value(self):
+        return self.colour * 9
+
+    @property
     def type(self):
         return "q"
 
@@ -238,11 +262,7 @@ class King(Piece):
                         if not self.board.squares[5][y] and self.board.squares[7][y]:
                             if self.board.squares[6][y]:
                                 if self.board.squares[nx][ny]:
-                                    return (
-                                        self.board.squares[nx][ny].get_colour()
-                                        != self.colour
-                                        and not self.board.squares[7][y].moved
-                                    )
+                                    return False
                                 else:
                                     return not self.board.squares[7][y].moved
                             return not self.board.squares[7][y].moved
@@ -256,13 +276,9 @@ class King(Piece):
                                 piece.can_move((5, y)) or piece.can_move((nx, ny))
                             ):
                                 return False
-                        if not self.board.squares[3][y] and self.board.squares[0][y]:
+                        if not self.board.squares[3][y] and not self.board.squares[1][y] and self.board.squares[0][y]:
                             if self.board.squares[nx][y]:
-                                return (
-                                    self.board.squares[nx][ny].get_colour()
-                                    != self.colour
-                                    and not self.board.squares[0][y].moved
-                                )
+                                return False
                             return not self.board.squares[0][y].moved
                         else:
                             return False
@@ -276,6 +292,10 @@ class King(Piece):
         if self.board.squares[nx][ny]:
             return self.board.squares[nx][ny].get_colour() != self.colour
         return True
+
+    @property
+    def value(self):
+        return 0
 
     @property
     def type(self):

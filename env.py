@@ -41,64 +41,54 @@ class ChessEnvironment:
                         and piece.get_colour() == self.board.on_move
                     ):
                         if piece.type == "p" and (j == 7 or j == 0):
-                            board = copy.deepcopy(self.board.get_board())
-                            if self.board.check_safe_king(
-                                self.board.do_move(
-                                    board,
-                                    piece.get_pos(),
-                                    (i, j),
-                                    "q",
-                                )
-                            ):
+                            board = copy.deepcopy(self.board)
+                            board.do_move(
+                                piece.get_pos(),
+                                (i, j),
+                                "q",
+                            )
+                            if board.check_safe_king():
                                 self.possible_moves.append(
                                     (piece.get_pos(), (i, j), "q")
                                 )
-                            board = copy.deepcopy(self.board.get_board())
-                            if self.board.check_safe_king(
-                                self.board.do_move(
-                                    board,
-                                    piece.get_pos(),
-                                    (i, j),
-                                    "r",
-                                )
-                            ):
+                            board = copy.deepcopy(self.board)
+                            board.do_move(
+                                piece.get_pos(),
+                                (i, j),
+                                "r",
+                            )
+                            if board.check_safe_king():
                                 self.possible_moves.append(
                                     (piece.get_pos(), (i, j), "r")
                                 )
-                            board = copy.deepcopy(self.board.get_board())
-                            if self.board.check_safe_king(
-                                self.board.do_move(
-                                    board,
-                                    piece.get_pos(),
-                                    (i, j),
-                                    "b",
-                                )
-                            ):
+                            board = copy.deepcopy(self.board)
+                            board.do_move(
+                                piece.get_pos(),
+                                (i, j),
+                                "b",
+                            )
+                            if board.check_safe_king():
                                 self.possible_moves.append(
                                     (piece.get_pos(), (i, j), "b")
                                 )
-                            board = copy.deepcopy(self.board.get_board())
-                            if self.board.check_safe_king(
-                                self.board.do_move(
-                                    board,
-                                    piece.get_pos(),
-                                    (i, j),
-                                    "n",
-                                )
-                            ):
+                            board = copy.deepcopy(self.board)
+                            board.do_move(
+                                piece.get_pos(),
+                                (i, j),
+                                "n",
+                            )
+                            if board.check_safe_king():
                                 self.possible_moves.append(
                                     (piece.get_pos(), (i, j), "n")
                                 )
                         else:
-                            board = copy.deepcopy(self.board.get_board())
-                            if self.board.check_safe_king(
-                                self.board.do_move(
-                                    board,
-                                    piece.get_pos(),
-                                    (i, j),
-                                    "",
-                                )
-                            ):
+                            board = copy.deepcopy(self.board)
+                            board.do_move(
+                                piece.get_pos(),
+                                (i, j),
+                                "",
+                            )
+                            if board.check_safe_king():
                                 self.possible_moves.append(
                                     (piece.get_pos(), (i, j), "")
                                 )
@@ -107,16 +97,6 @@ class ChessEnvironment:
         x = ord(square[0]) - ord("a")
         y = int(square[1]) - 1
         return x, y
-
-    def print_possible_moves(self):
-        poss_moves = []
-        for move in self.possible_moves:
-            start = self.pos_to_string(move[0])
-            end = self.pos_to_string(move[1])
-            prom = move[2]
-            new_move = start + end + prom
-            poss_moves.append(new_move)
-        print(poss_moves)
 
     def pos_to_string(self, square):
         x = chr(square[0] + ord("a"))
@@ -139,7 +119,7 @@ class ChessEnvironment:
 
     @property
     def game_over(self):
-        return len(self.possible_moves) < 1
+        return len(self.possible_moves) < 1 or len([obj for obj in self.board.get_board().flatten() if obj]) < 3
 
     @property
     def result(self):

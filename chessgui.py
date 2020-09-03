@@ -31,7 +31,7 @@ class ChessGUI:
         self.board_label.place(relx=0.05, rely=0.05)
 
         self.game_label = tk.Label(self.root, text="Game playing")
-        self.game_label.place(relx=0.05, rely=0.95)
+        self.game_label.place(relx=0.05, rely=0.96)
 
         self.move_var = tk.StringVar()
         self.move_var.set("")
@@ -58,6 +58,7 @@ class ChessGUI:
     def play_move(self):
         if not self.game.game_over:
             self.game.move(self.move_var.get())
+            print(f"check = {self.game.board.in_check}")
             self.move_var.set("")
             self.set_valid_move(False)
             self.after_move()
@@ -77,7 +78,7 @@ class ChessGUI:
     def after_move(self):
         if self.game.game_over:
             self.game_label.configure(text="Game Over!")
-        self.game.print_possible_moves()
+        print(self.game.possible_moves_str)
         self.on_update()
 
     def set_valid_move(self, b):
