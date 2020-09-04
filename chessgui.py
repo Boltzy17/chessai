@@ -77,14 +77,8 @@ class ChessGUI:
         return "Unexpected result"
 
     def play_random_move(self):
-        if not self.env.game_over:
-            poss_moves = self.env.possible_moves_str
-            rand = np.random.randint(len(poss_moves))
-            print(f"selected move: {poss_moves[rand]}")
-            self.env.move(poss_moves[rand])
-            self.after_move()
-        else:
-            print("No Moves!")
+        self.env.load_from_fen(fen = "rnbq1rk1/pppp1ppp/4pn2/2b5/8/3BPN2/PPPP1PPP/RNBQ1RK1 w - - 6 5")
+        self.on_update()
 
     def after_move(self):
         if self.env.game_over:
@@ -124,7 +118,6 @@ class ChessGUI:
         for row in rows:
             xcount = 0
             for char in list(row):
-                print(char, f"{xcount}, {ycount}")
                 if '1' <= char <= '8':
                     for _ in range(int(char)):
                         xcount += 1

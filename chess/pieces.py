@@ -6,9 +6,9 @@ BLACK_PROMOTIONS = BLACK_PIECES - set("p")
 
 def colour_of_piece(piece):
     if piece in WHITE_PIECES:
-        return "w"
+        return 1
     if piece in BLACK_PIECES:
-        return "b"
+        return -1
 
 
 class Piece:
@@ -16,9 +16,6 @@ class Piece:
 
     def __init__(self):
         pass
-
-    def colour(self):
-        return colour_of_piece(self.fen)
 
     def move_squares(self, board, start):
         raise NotImplementedError()
@@ -41,18 +38,24 @@ class Piece:
         ends = []
         pos = start
         for _ in range(max_moves):
+            if not 0 < start.rank + delta_y < 9 or not 0 < start.file + delta_x < 9:
+                break
             pos = pos.delta(delta_x, delta_y)
             if not pos:
                 break
 
             piece_at_pos = board.piece_at(pos)
-            if not piece_at_pos:
+            if piece_at_pos is None:
                 ends.append(pos)
             else:
                 if can_take and colour_of_piece(piece_at_pos) != self.colour:
                     ends.append(pos)
                 break
         return ends
+
+    @property
+    def colour(self):
+        return colour_of_piece(self.fen)
 
 
 class Knight(Piece):
@@ -192,11 +195,11 @@ class Pawn(Piece):
         return ends
 
 
-class WhitePawn:
+class WhitePawn(Pawn):
     fen = "P"
 
 
-class BlackPawn:
+class BlackPawn(Pawn):
     fen = "p"
 
 

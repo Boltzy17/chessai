@@ -19,9 +19,9 @@ class ChessEnvironment:
         if not self.game_over:
             if not (3 < len(move) < 6):
                 print("Invalid format")
-            pos = self.string_to_pos(move[:2])
+            pos = chess.string_to_coords(move[:2])
             start = chess.Square(pos[0], pos[1])
-            new_pos = self.string_to_pos(move[2:4])
+            new_pos = chess.string_to_coords(move[2:4])
             end = chess.Square(new_pos[0], new_pos[1])
             prom = None
             if len(move) == 5:
@@ -38,11 +38,6 @@ class ChessEnvironment:
     def get_possible_moves(self):
         pass
 
-    def string_to_pos(self, square):
-        x = ord(square[0]) - ord("a")
-        y = int(square[1]) - 1
-        return x, y
-
     def pos_to_string(self, square):
         x = chr(square[0] + ord("a"))
         y = square[1] + 1
@@ -55,16 +50,12 @@ class ChessEnvironment:
     def possible_moves_str(self):
         poss_moves = []
         for move in self.possible_moves:
-            start = self.pos_to_string(move[0])
-            end = self.pos_to_string(move[1])
-            prom = move[2]
-            new_move = start + end + prom
-            poss_moves.append(new_move)
+            poss_moves.append(str(move))
         return poss_moves
 
     @property
     def game_over(self):
-        return False
+        return self.game.game_over
 
     @property
     def result(self):
