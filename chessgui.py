@@ -77,8 +77,12 @@ class ChessGUI:
         return "Unexpected result"
 
     def play_random_move(self):
-        self.env.load_from_fen(fen = "rnbq1rk1/pppp1ppp/4pn2/2b5/8/3BPN2/PPPP1PPP/RNBQ1RK1 w - - 6 5")
-        self.on_update()
+        if len(self.env.possible_moves) > 0:
+            rand = np.random.randint(len(self.env.possible_moves))
+            self.env.move(self.env.possible_moves_str[rand])
+            self.on_update()
+        else:
+            print("Game is over!")
 
     def after_move(self):
         if self.env.game_over:

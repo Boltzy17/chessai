@@ -38,7 +38,7 @@ class Piece:
         ends = []
         pos = start
         for _ in range(max_moves):
-            if not 0 < start.rank + delta_y < 9 or not 0 < start.file + delta_x < 9:
+            if not (0 < pos.rank + delta_y < 9) or not (0 < pos.file + delta_x < 9):
                 break
             pos = pos.delta(delta_x, delta_y)
             if not pos:

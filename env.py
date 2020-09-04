@@ -5,12 +5,12 @@ class ChessEnvironment:
     def __init__(self):
         self.game = chess.Game()
         self.move_list = []
-        self.possible_moves = []  # in the form pos, new_pos, prom
+        self.possible_moves = []  # Move objects
         self.reset()
 
     def reset(self):
         self.game = chess.Game()
-        # self.get_possible_moves()
+        self.get_possible_moves()
 
     def load_from_fen(self, fen):
         self.game = chess.Game(fen = fen)
@@ -26,17 +26,14 @@ class ChessEnvironment:
             prom = None
             if len(move) == 5:
                 prom = move[4]
-            if self.game.move(chess.Move(start, end, prom=prom)):
-                self.move_list.append(move)
-                self.after_move()
-                return True
-            else:
-                print("Invalid move")
-                return False
+            self.game = self.game.move(chess.Move(start, end, prom=prom))
+            self.move_list.append(move)
+            self.after_move()
+            return True
         return False
 
     def get_possible_moves(self):
-        pass
+        self.possible_moves = [*self.game.generate_moves(),]
 
     def pos_to_string(self, square):
         x = chr(square[0] + ord("a"))
@@ -44,7 +41,7 @@ class ChessEnvironment:
         return str(x) + str(y)
 
     def after_move(self):
-        pass  # self.get_possible_moves()
+        self.get_possible_moves()
 
     @property
     def possible_moves_str(self):

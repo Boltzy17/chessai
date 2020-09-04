@@ -23,7 +23,7 @@ class InvalidCastleException(Exception):
 def string_to_coords(data: str):
     if len(data) != 2:
         raise InvalidSquareException(f"{data} is not a valid square")
-    file = ord(data[0]) - ord("a")
+    file = ord(data[0]) - ord("a") + 1
     rank = int(data[1])
     return (file, rank)
 
@@ -73,9 +73,10 @@ class Move:
         self.prom = prom
 
     def __str__(self):
-        s = f"({self.start} to {self.end})"
+        s = f"{self.start}{self.end}"
         if self.prom:
             s += f"{self.prom}"
+        return s
 
     def __eq__(self, other):
         return self.start == other.start and self.end == other.end
@@ -92,17 +93,17 @@ class Move:
 
 class Board:
     def __init__(self, squares=None, fen=None):
+        self.squares = [None for _ in range(64)]
         if squares:
             assert len(squares) == 64
             self.squares = squares
         elif fen:
             self.load_from_fen(fen)
         else:
-            self.squares = [None for _ in range(64)]
-            self.squares[0:7] = list("RNBQKBNR")
-            self.squares[8:15] = ["P" for _ in range(8)]
-            self.squares[48:55] = ["p" for _ in range(8)]
-            self.squares[56:63] = list("rnbqkbnr")
+            self.squares[0:8] = "RNBQKBNR"
+            self.squares[8:16] = "P" * 8
+            self.squares[48:56] = "p" * 8
+            self.squares[56:64] = "rnbqkbnr"
         self.white_in_check = False
         self.black_in_check = False
 
@@ -175,7 +176,7 @@ class Board:
                     black_sq = square
                 colour = pieces.colour_of_piece(piece)
                 piece_o = pieces.PIECES[piece]()
-                threats = piece_o.threat_squares(self.squares, square)
+                threats = piece_o.threat_squares(self, square)
                 if colour == 1:
                     white_threats.update(threats)
                 else:
@@ -234,8 +235,9 @@ class Board:
             else:
                 raise InvalidEnPassentException()
             new_board_squares[taken_i] = None
-
-        return Board(squares=new_board_squares)
+        new_board = Board(squares=new_board_squares)
+        new_board.check_check()
+        return new_board
 
 
 class Game:
@@ -268,11 +270,12 @@ class Game:
             castles_str = "-"
         return f"{self.board.fen()} {self.on_move} {castles_str} {ep_str} {self.fifty_mr} {self.full_move_count}"
 
-    def valid_moves(self, piece, start):
+    def legal_moves(self, piece, start):
         piece_o = pieces.PIECES[piece]()
         ends = set()
         p_ends = piece_o.move_squares(self.board, start)
         p_threat_ends = piece_o.threat_squares(self.board, start)
+        ends.update(p_ends)
         for end in p_threat_ends - p_ends:
             if self.board.piece_at(end) is not None:
                 ends.add(end)
@@ -301,7 +304,7 @@ class Game:
                 if self.castles["Q"]:
                     if can_castle_through_square(
                         Square(6, 1)
-                    ) and can_castle_through_square((7, 1)):
+                    ) and can_castle_through_square(Square(7, 1)):
                         ends.add(Square(7, 1))
             if piece == "k":
                 if self.castles["k"]:
@@ -314,7 +317,7 @@ class Game:
                 if self.castles["q"]:
                     if can_castle_through_square(
                         Square(6, 8)
-                    ) and can_castle_through_square((7, 8)):
+                    ) and can_castle_through_square(Square(7, 8)):
                         ends.add(Square(7, 8))
 
         if piece_o.colour == 1:
@@ -337,6 +340,9 @@ class Game:
                     for end in ends
                 ],
             )
+        mb_copy = copy.deepcopy(move_boards)
+        for move_board in mb_copy:
+            print(f"{move_board[0]}, {move_board[1]}")
         moves = set(
             [move_board[0] for move_board in move_boards if not move_board[1]]
         )
@@ -344,18 +350,16 @@ class Game:
 
     def generate_moves(self):
         moves = set()
-        print(len(self.board.squares))
         for i in range(len(self.board.squares)):
             x = (i % 8) + 1
             y = (i // 8) + 1
-            print(f"x = {x}, y = {y}")
             start = Square(x, y)
             piece = self.board.piece_at(start)
             if piece is None:
                 continue
             if pieces.PIECES[piece]().colour != self.on_move:
                 continue
-            moves.update(self.valid_moves(piece, start))
+            moves.update(self.legal_moves(piece, start))
         return moves
 
     def move(self, move: Move):
@@ -412,4 +416,4 @@ class Game:
 
     @property
     def game_over(self):
-        return False
+        return len(self.generate_moves()) < 1
