@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-from piece import Pawn, Knight, Bishop, Rook, Queen, King
+from old.piece import Pawn, Knight, Bishop, Rook, Queen, King
 
 
 # White = 1, Black = -1
@@ -116,7 +116,6 @@ class Board:
         self.squares[nx][ny] = self.squares[x][y]
         self.squares[nx][ny].set_pos(new_pos)
         self.squares[x][y] = None
-        return self.squares
 
     def check_safe_king(self, board = None):
         if board is None:

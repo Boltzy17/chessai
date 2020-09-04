@@ -11,7 +11,7 @@ class EventHandler:
         self.gui.play_move()
 
     def on_configure(self, *event):
-        if self.gui.root.winfo_exists():
+        if self.gui.root:
             self.resize_cd = (self.resize_cd + 1) % max_resize_cd
             if self.resize_cd == 0:
                 self.gui.on_resize()
@@ -20,7 +20,7 @@ class EventHandler:
         pass
 
     def check_move(self, *event):
-        if self.gui.move_var.get() in self.gui.game.possible_moves_str:
+        if self.gui.move_var.get() in self.gui.env.possible_moves_str:
             print("valid")
             self.gui.set_valid_move(True)
         else:
@@ -30,5 +30,5 @@ class EventHandler:
         self.gui.play_random_move()
 
     def on_start(self, *event):
-        self.gui.game.reset()
+        self.gui.env.reset()
         self.gui.on_update()

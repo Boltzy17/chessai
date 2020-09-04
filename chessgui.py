@@ -17,7 +17,7 @@ class ChessGUI:
         self.board = self.bg_image.copy()
         self.play_board = self.board.copy()
 
-        self.game = ChessEnvironment()
+        self.env = ChessEnvironment()
 
         self.root = tk.Tk(className="Chess")
         self.root.geometry("{}x{}".format(x, y))
@@ -56,29 +56,40 @@ class ChessGUI:
         self.on_resize()
 
     def play_move(self):
-        if not self.game.game_over:
-            self.game.move(self.move_var.get())
-            print(f"check = {self.game.board.in_check}")
+        if not self.env.game_over:
+            self.env.move(self.move_var.get())
+            print(f"check = {self.env.game.in_check}")
             self.move_var.set("")
+            self.game_label.configure(foreground="black", text = "Game Playing")
             self.set_valid_move(False)
             self.after_move()
         else:
-            self.game_label.configure(text="Game Over!")
+            self.game_label.configure(foreground = "red")
+
+    def get_game_result(self):
+        res = self.env.result
+        if res == 1:
+            return "White won!"
+        if res == -1:
+            return "Black won!"
+        if res == 0:
+            return "It was a draw!"
+        return "Unexpected result"
 
     def play_random_move(self):
-        if not self.game.game_over:
-            poss_moves = self.game.possible_moves_str
+        if not self.env.game_over:
+            poss_moves = self.env.possible_moves_str
             rand = np.random.randint(len(poss_moves))
             print(f"selected move: {poss_moves[rand]}")
-            self.game.move(poss_moves[rand])
+            self.env.move(poss_moves[rand])
             self.after_move()
         else:
             print("No Moves!")
 
     def after_move(self):
-        if self.game.game_over:
-            self.game_label.configure(text="Game Over!")
-        print(self.game.possible_moves_str)
+        if self.env.game_over:
+            self.game_label.configure(text=f"Game Over! {self.get_game_result()}")
+        print(self.env.possible_moves_str)
         self.on_update()
 
     def set_valid_move(self, b):
@@ -108,31 +119,40 @@ class ChessGUI:
 
     def load_board(self):
         self.play_board = self.board.copy()
-        for piece in [p for p in self.game.board.get_board().flatten() if p]:
-            x, y = piece.get_pos()
-            xoff, yoff = (
-                x * self.piece_size,
-                self.board_size - ((y + 1) * self.piece_size),
-            )
-            piece_str = piece.type + piece.colour_str
-            self.play_board.paste(
-                self.pieces[piece_str], (xoff, yoff), self.pieces[piece_str]
-            )  # 2nd one is mask (alpha)
+        rows = self.env.game.board.fen().split('/')
+        ycount = 0
+        for row in rows:
+            xcount = 0
+            for char in list(row):
+                print(char, f"{xcount}, {ycount}")
+                if '1' <= char <= '8':
+                    for _ in range(int(char)):
+                        xcount += 1
+                else:
+                    xoff, yoff = (
+                        xcount * self.piece_size,
+                        self.board_size - ((ycount + 1) * self.piece_size),
+                    )
+                    self.play_board.paste(
+                        self.pieces[char], (xoff, yoff), self.pieces[char]
+                    )  # 2nd one is mask (alpha)
+                    xcount += 1
+            ycount += 1
 
     def load_piece_images(self):
         pieces = {
-            "pw": Image.open("./resources/images/pawn.png"),
-            "nw": Image.open("./resources/images/knight.png"),
-            "bw": Image.open("./resources/images/bishop.png"),
-            "rw": Image.open("./resources/images/rook.png"),
-            "qw": Image.open("./resources/images/queen.png"),
-            "kw": Image.open("./resources/images/king.png"),
-            "pb": Image.open("./resources/images/pawnb.png"),
-            "nb": Image.open("./resources/images/knightb.png"),
-            "bb": Image.open("./resources/images/bishopb.png"),
-            "rb": Image.open("./resources/images/rookb.png"),
-            "qb": Image.open("./resources/images/queenb.png"),
-            "kb": Image.open("./resources/images/kingb.png"),
+            'P': Image.open("./resources/images/pawn.png"),
+            'N': Image.open("./resources/images/knight.png"),
+            'B': Image.open("./resources/images/bishop.png"),
+            'R': Image.open("./resources/images/rook.png"),
+            'Q': Image.open("./resources/images/queen.png"),
+            'K': Image.open("./resources/images/king.png"),
+            'p': Image.open("./resources/images/pawnb.png"),
+            'n': Image.open("./resources/images/knightb.png"),
+            'b': Image.open("./resources/images/bishopb.png"),
+            'r': Image.open("./resources/images/rookb.png"),
+            'q': Image.open("./resources/images/queenb.png"),
+            'k': Image.open("./resources/images/kingb.png"),
         }
         return pieces
 
