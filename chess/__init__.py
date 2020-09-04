@@ -1,4 +1,5 @@
 import chess.pieces
+import chess.movefinder
 import copy
 
 

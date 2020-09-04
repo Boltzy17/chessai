@@ -32,7 +32,7 @@ class Piece:
         start,
         delta_x: int,
         delta_y: int,
-        max_moves=8,
+        max_moves=7,
         can_take=True,
     ):
         ends = []
