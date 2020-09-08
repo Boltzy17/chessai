@@ -289,7 +289,7 @@ class Game:
             piece == "K" and not self.board.black_in_check
         ):
 
-            def can_castle_through_square(square):
+            def can_castle_through(square):
                 return (
                     self.board.piece_at(square) is None and square not in other_threats
                 )
@@ -297,56 +297,86 @@ class Game:
             if piece == "K":
                 if self.castles["K"]:
                     if (
-                        can_castle_through_square(Square(3, 1))
-                        and can_castle_through_square(Square(4, 1))
+                        can_castle_through(Square(3, 1))
+                        and can_castle_through(Square(4, 1))
                         and self.board.piece_at(Square(2, 1)) is None
                     ):
                         ends.add(Square(3, 1))
                 if self.castles["Q"]:
-                    if can_castle_through_square(
-                        Square(6, 1)
-                    ) and can_castle_through_square(Square(7, 1)):
+                    if can_castle_through(Square(6, 1)) and can_castle_through(
+                        Square(7, 1)
+                    ):
                         ends.add(Square(7, 1))
             if piece == "k":
                 if self.castles["k"]:
                     if (
-                        can_castle_through_square(Square(3, 8))
-                        and can_castle_through_square(Square(4, 8))
+                        can_castle_through(Square(3, 8))
+                        and can_castle_through(Square(4, 8))
                         and self.board.piece_at(Square(2, 8)) is None
                     ):
                         ends.add(Square(3, 8))
                 if self.castles["q"]:
-                    if can_castle_through_square(
-                        Square(6, 8)
-                    ) and can_castle_through_square(Square(7, 8)):
+                    if can_castle_through(Square(6, 8)) and can_castle_through(
+                        Square(7, 8)
+                    ):
                         ends.add(Square(7, 8))
-
+        moves = []
         if piece_o.colour == 1:
-            move_boards = zip(
-                [Move(start, end) for end in ends],
-                [
-                    self.board.board_after_move(
-                        Move(start, end), self.en_passent
-                    ).white_in_check
-                    for end in ends
-                ],
-            )
+            for end in ends:
+                if end.rank == 8 and piece == "P":
+                    # Promotion to Queen
+                    if not self.board.board_after_move(
+                        Move(start, end, prom = "Q"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="Q"))
+                    # Promotion to rook
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="R"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="R"))
+                    # Promotion to Bishop
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="B"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="B"))
+                    # Promotion to knight
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="N"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="N"))
+                else:
+                    if not self.board.board_after_move(
+                            Move(start, end), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end))
         else:
-            move_boards = zip(
-                [Move(start, end) for end in ends],
-                [
-                    self.board.board_after_move(
-                        Move(start, end), self.en_passent
-                    ).black_in_check
-                    for end in ends
-                ],
-            )
-        mb_copy = copy.deepcopy(move_boards)
-        for move_board in mb_copy:
-            print(f"{move_board[0]}, {move_board[1]}")
-        moves = set(
-            [move_board[0] for move_board in move_boards if not move_board[1]]
-        )
+            for end in ends:
+                if end.rank == 1 and piece == "p":
+                    # Promotion to Queen
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="q"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="q"))
+                    # Promotion to rook
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="r"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="r"))
+                    # Promotion to Bishop
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="b"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="b"))
+                    # Promotion to knight
+                    if not self.board.board_after_move(
+                            Move(start, end, prom="n"), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end, prom="n"))
+                else:
+                    if not self.board.board_after_move(
+                            Move(start, end), self.en_passent
+                    ).white_in_check:
+                        moves.append(Move(start, end))
         return moves
 
     def generate_moves(self):

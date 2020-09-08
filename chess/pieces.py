@@ -3,6 +3,9 @@ BLACK_PIECES = frozenset("prnbkq")
 WHITE_PROMOTIONS = WHITE_PIECES - set("P")
 BLACK_PROMOTIONS = BLACK_PIECES - set("p")
 
+KNIGHTMOVESX = [-2, -2, -1, -1, 1, 1, 2, 2]
+KNIGHTMOVESY = [-1, 1, -2, 2, -2, 2, -1, 1]
+
 
 def colour_of_piece(piece):
     if piece in WHITE_PIECES:
@@ -59,6 +62,7 @@ class Piece:
 
 
 class Knight(Piece):
+
     def move_squares(self, board, start):
         ends = set()
         for x in (1, -1):
