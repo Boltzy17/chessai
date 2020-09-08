@@ -83,7 +83,7 @@ class Move:
         return self.start == other.start and self.end == other.end
 
     def __hash__(self):
-        return hash((self.start, self.end))
+        return hash((self.start, self.end, self.prom))
 
     @property
     def man_dist(self):
@@ -323,27 +323,38 @@ class Game:
         moves = []
         if piece_o.colour == 1:
             for end in ends:
-                if end.rank == 8 and piece == "P":
+                if piece == 'P' and end.rank == 8:
                     # Promotion to Queen
+                    print(
+                        f"Queen prom: {self.board.board_after_move(Move(start, end, prom='Q'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                        Move(start, end, prom = "Q"), self.en_passent
+                        Move(start, end, prom = 'Q'), self.en_passent
                     ).white_in_check:
-                        moves.append(Move(start, end, prom="Q"))
+                        print("Queen prom added!")
+                        moves.append(Move(start, end, prom='Q'))
                     # Promotion to rook
+                    print(f"Rook prom: {self.board.board_after_move(Move(start, end, prom='R'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom="R"), self.en_passent
+                            Move(start, end, prom='R'), self.en_passent
                     ).white_in_check:
-                        moves.append(Move(start, end, prom="R"))
+                        print("Rook prom added!")
+                        moves.append(Move(start, end, prom='R'))
                     # Promotion to Bishop
+                    print(
+                        f"Bishop prom: {self.board.board_after_move(Move(start, end, prom='B'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom="B"), self.en_passent
+                            Move(start, end, prom='B'), self.en_passent
                     ).white_in_check:
-                        moves.append(Move(start, end, prom="B"))
+                        print("Bishop prom added!")
+                        moves.append(Move(start, end, prom='B'))
                     # Promotion to knight
+                    print(
+                        f"Knight prom: {self.board.board_after_move(Move(start, end, prom='N'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom="N"), self.en_passent
+                            Move(start, end, prom='N'), self.en_passent
                     ).white_in_check:
-                        moves.append(Move(start, end, prom="N"))
+                        print("Knight prom added!")
+                        moves.append(Move(start, end, prom='N'))
                 else:
                     if not self.board.board_after_move(
                             Move(start, end), self.en_passent
@@ -351,31 +362,31 @@ class Game:
                         moves.append(Move(start, end))
         else:
             for end in ends:
-                if end.rank == 1 and piece == "p":
+                if piece == 'p' and end.rank == 1:
                     # Promotion to Queen
                     if not self.board.board_after_move(
-                            Move(start, end, prom="q"), self.en_passent
-                    ).white_in_check:
-                        moves.append(Move(start, end, prom="q"))
+                            Move(start, end, prom='q'), self.en_passent
+                    ).black_in_check:
+                        moves.append(Move(start, end, prom='q'))
                     # Promotion to rook
                     if not self.board.board_after_move(
-                            Move(start, end, prom="r"), self.en_passent
-                    ).white_in_check:
-                        moves.append(Move(start, end, prom="r"))
+                            Move(start, end, prom='r'), self.en_passent
+                    ).black_in_check:
+                        moves.append(Move(start, end, prom='r'))
                     # Promotion to Bishop
                     if not self.board.board_after_move(
-                            Move(start, end, prom="b"), self.en_passent
-                    ).white_in_check:
-                        moves.append(Move(start, end, prom="b"))
+                            Move(start, end, prom='b'), self.en_passent
+                    ).black_in_check:
+                        moves.append(Move(start, end, prom='b'))
                     # Promotion to knight
                     if not self.board.board_after_move(
-                            Move(start, end, prom="n"), self.en_passent
-                    ).white_in_check:
-                        moves.append(Move(start, end, prom="n"))
+                            Move(start, end, prom='n'), self.en_passent
+                    ).black_in_check:
+                        moves.append(Move(start, end, prom='n'))
                 else:
                     if not self.board.board_after_move(
                             Move(start, end), self.en_passent
-                    ).white_in_check:
+                    ).black_in_check:
                         moves.append(Move(start, end))
         return moves
 

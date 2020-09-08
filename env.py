@@ -26,10 +26,12 @@ class ChessEnvironment:
             prom = None
             if len(move) == 5:
                 prom = move[4]
-            self.game = self.game.move(chess.Move(start, end, prom=prom))
-            self.move_list.append(move)
-            self.after_move()
-            return True
+            move_o = chess.Move(start, end, prom=prom)
+            if move_o in self.possible_moves:
+                self.game = self.game.move(move_o)
+                self.move_list.append(move)
+                self.after_move()
+                return True
         return False
 
     def get_possible_moves(self):
