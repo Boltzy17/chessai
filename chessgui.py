@@ -150,6 +150,7 @@ class ChessGUI:
             'r': Image.open("./resources/images/rookb.png"),
             'q': Image.open("./resources/images/queenb.png"),
             'k': Image.open("./resources/images/kingb.png"),
+            'E': Image.open("./resources/images/EP.png")
         }
         return pieces
 

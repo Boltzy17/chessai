@@ -1,4 +1,5 @@
 import chess
+import evalagent
 
 
 class ChessEnvironment:
@@ -6,6 +7,7 @@ class ChessEnvironment:
         self.game = chess.Game()
         self.move_list = []
         self.possible_moves = []  # Move objects
+        self.agent = evalagent.EvalAgent()
         self.reset()
 
     def reset(self):
@@ -34,16 +36,21 @@ class ChessEnvironment:
                 return True
         return False
 
+    def print_evals(self):
+        boards = []
+        for move in self.possible_moves:
+            game = self.game.move(move)
+            boards.append(game.board.squares)
+        evals = self.agent.eval(boards)
+        for i in range(len(self.possible_moves)):
+            print(f"{self.possible_moves[i]}, eval = {evals[i]}")
+
     def get_possible_moves(self):
         self.possible_moves = [*self.game.generate_moves(),]
 
-    def pos_to_string(self, square):
-        x = chr(square[0] + ord("a"))
-        y = square[1] + 1
-        return str(x) + str(y)
-
     def after_move(self):
         self.get_possible_moves()
+        self.print_evals()
 
     @property
     def possible_moves_str(self):
@@ -63,5 +70,5 @@ class ChessEnvironment:
     # NN stuff
     @property
     def observation_spec(self):
-        return (64,)
+        return [64, 1]
 

@@ -1,6 +1,7 @@
 import chess.pieces
-import chess.movefinder
+
 import copy
+import numpy as np
 
 
 class InvalidSquareException(Exception):
@@ -94,32 +95,55 @@ class Move:
 
 class Board:
     def __init__(self, squares=None, fen=None):
-        self.squares = [None for _ in range(64)]
-        if squares:
+        self.squares = np.zeros((64), dtype=float)
+        if squares is not None:
             assert len(squares) == 64
             self.squares = squares
         elif fen:
             self.load_from_fen(fen)
         else:
-            self.squares[0:8] = "RNBQKBNR"
-            self.squares[8:16] = "P" * 8
-            self.squares[48:56] = "p" * 8
-            self.squares[56:64] = "rnbqkbnr"
+            self.default_board()
         self.white_in_check = False
         self.black_in_check = False
+
+    def default_board(self):
+        # pawns
+        for i in range(8):
+            # white
+            self.squares[8 + i] = pieces.PIECES_FENS["P"]
+            # black
+            self.squares[6 * 8 + i] = pieces.PIECES_FENS["p"]
+        # white pieces
+        self.squares[0] = pieces.PIECES_FENS["R"]
+        self.squares[1] = pieces.PIECES_FENS["N"]
+        self.squares[2] = pieces.PIECES_FENS["B"]
+        self.squares[3] = pieces.PIECES_FENS["Q"]
+        self.squares[4] = pieces.PIECES_FENS["K"]
+        self.squares[5] = pieces.PIECES_FENS["B"]
+        self.squares[6] = pieces.PIECES_FENS["N"]
+        self.squares[7] = pieces.PIECES_FENS["R"]
+        # black pieces
+        self.squares[56 + 0] = pieces.PIECES_FENS["r"]
+        self.squares[56 + 1] = pieces.PIECES_FENS["n"]
+        self.squares[56 + 2] = pieces.PIECES_FENS["b"]
+        self.squares[56 + 3] = pieces.PIECES_FENS["q"]
+        self.squares[56 + 4] = pieces.PIECES_FENS["k"]
+        self.squares[56 + 5] = pieces.PIECES_FENS["b"]
+        self.squares[56 + 6] = pieces.PIECES_FENS["n"]
+        self.squares[56 + 7] = pieces.PIECES_FENS["r"]
 
     def fen(self):
         fen = ""
         for y in range(8):
             empty_count = 0
             for x in range(8):
-                if self.squares[8 * y + x] is None:
+                if self.squares[8 * y + x] == pieces.EMPTY_SQUARE:
                     empty_count += 1
                 else:
                     if empty_count > 0:
                         fen += f"{empty_count}"
                         empty_count = 0
-                    fen += self.squares[8 * y + x]
+                    fen += pieces.PIECES[self.squares[8 * y + x]]().fen
             if empty_count > 0:
                 fen += f"{empty_count}"
             fen += "/"
@@ -132,17 +156,22 @@ class Board:
             for char in row:
                 if "1" <= char <= "8":
                     for _ in range(int(char)):
-                        squares.append(None)
+                        squares.append(pieces.EMPTY_SQUARE)
                 else:
-                    squares.append(char)
+                    squares.append(pieces.PIECES_FENS[char])
         assert len(squares) == 64
         self.squares = squares
 
     def piece_at(self, square: Square):
-        if self.squares[square.to_index()]:
-            return self.squares[square.to_index()]
-        else:
-            return None
+        return self.squares[square.to_index()]
+
+    def set_en_passent(self, square: Square):
+        self.squares[square.to_index()] = 7
+
+    def remove_en_passent(self):
+        for i in range(len(self.squares)):
+            if self.squares[i] == 7:
+                self.squares[i] = pieces.EMPTY_SQUARE
 
     def threats(self, col):
         threats = set()
@@ -150,7 +179,7 @@ class Board:
             for rank in range(1, 9):
                 square = Square(file, rank)
                 piece = self.piece_at(square)
-                if piece is None:
+                if piece == pieces.EMPTY_SQUARE:
                     continue
                 if col != pieces.colour_of_piece(piece):
                     continue
@@ -169,14 +198,14 @@ class Board:
             for rank in range(1, 9):
                 square = Square(file, rank)
                 piece = self.piece_at(square)
-                if piece is None:
+                if piece == pieces.EMPTY_SQUARE:
                     continue
-                if piece == "K":
+                piece_o = pieces.PIECES[piece]()
+                if isinstance(piece_o, pieces.WhiteKing):
                     white_sq = square
-                if piece == "k":
+                if isinstance(piece_o, pieces.BlackKing):
                     black_sq = square
                 colour = pieces.colour_of_piece(piece)
-                piece_o = pieces.PIECES[piece]()
                 threats = piece_o.threat_squares(self, square)
                 if colour == 1:
                     white_threats.update(threats)
@@ -196,10 +225,11 @@ class Board:
         else:
             piece = new_board_squares[start_i]
         new_board_squares[end_i] = piece
-        new_board_squares[start_i] = None
+        new_board_squares[start_i] = pieces.EMPTY_SQUARE
 
+        piece_o = pieces.PIECES[piece]()
         # Castle rules
-        if piece == "k" or piece == "K":
+        if isinstance(piece_o, pieces.King):
             if abs(move.end.file - move.start.file) == 2:
                 if move.end.rank == 8:
                     if move.end.file == 3:
@@ -223,7 +253,7 @@ class Board:
                     raise InvalidCastleException("You cannot castle there!")
                 r = new_board_squares[rook_start]
                 new_board_squares[rook_end] = r
-                new_board_squares[rook_start] = None
+                new_board_squares[rook_start] = pieces.EMPTY_SQUARE
 
         # En passent rules
         if move.end == en_passent:
@@ -235,7 +265,7 @@ class Board:
                 taken_i = Square(move.end.file, 6).to_index()
             else:
                 raise InvalidEnPassentException()
-            new_board_squares[taken_i] = None
+            new_board_squares[taken_i] = pieces.EMPTY_SQUARE
         new_board = Board(squares=new_board_squares)
         new_board.check_check()
         return new_board
@@ -258,6 +288,7 @@ class Game:
             if en_passent != "-":
                 ep_f, ep_r = string_to_coords(en_passent)
                 self.en_passent = Square(ep_f, ep_r)
+                self.board.set_en_passent(self.en_passent)
             self.fifty_mr = int(fifty_mr)
             self.full_move_count = int(mc)
 
@@ -278,23 +309,23 @@ class Game:
         p_threat_ends = piece_o.threat_squares(self.board, start)
         ends.update(p_ends)
         for end in p_threat_ends - p_ends:
-            if self.board.piece_at(end) is not None:
+            if self.board.piece_at(end) != pieces.EMPTY_SQUARE:
                 ends.add(end)
             if self.en_passent == end:
-                if piece == "p" or piece == "P":
+                if isinstance(piece_o, pieces.Pawn):
                     ends.add(end)
         other_colour = piece_o.colour * -1
         other_threats = self.board.threats(other_colour)
-        if (piece == "k" and not self.board.black_in_check) or (
-            piece == "K" and not self.board.black_in_check
-        ):
+        if (
+            isinstance(piece_o, pieces.BlackKing) and not self.board.black_in_check
+        ) or (isinstance(piece_o, pieces.WhiteKing) and not self.board.white_in_check):
 
             def can_castle_through(square):
                 return (
                     self.board.piece_at(square) is None and square not in other_threats
                 )
 
-            if piece == "K":
+            if isinstance(piece_o, pieces.WhiteKing):
                 if self.castles["K"]:
                     if (
                         can_castle_through(Square(3, 1))
@@ -307,7 +338,7 @@ class Game:
                         Square(7, 1)
                     ):
                         ends.add(Square(7, 1))
-            if piece == "k":
+            if isinstance(piece_o, pieces.BlackKing):
                 if self.castles["k"]:
                     if (
                         can_castle_through(Square(3, 8))
@@ -323,81 +354,71 @@ class Game:
         moves = []
         if piece_o.colour == 1:
             for end in ends:
-                if piece == 'P' and end.rank == 8:
+                if isinstance(piece_o, pieces.WhitePawn) and end.rank == 8:
                     # Promotion to Queen
-                    print(
-                        f"Queen prom: {self.board.board_after_move(Move(start, end, prom='Q'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                        Move(start, end, prom = 'Q'), self.en_passent
+                        Move(start, end, prom="Q"), self.en_passent
                     ).white_in_check:
-                        print("Queen prom added!")
-                        moves.append(Move(start, end, prom='Q'))
+                        moves.append(Move(start, end, prom="Q"))
                     # Promotion to rook
-                    print(f"Rook prom: {self.board.board_after_move(Move(start, end, prom='R'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom='R'), self.en_passent
+                        Move(start, end, prom="R"), self.en_passent
                     ).white_in_check:
-                        print("Rook prom added!")
-                        moves.append(Move(start, end, prom='R'))
+                        moves.append(Move(start, end, prom="R"))
                     # Promotion to Bishop
-                    print(
-                        f"Bishop prom: {self.board.board_after_move(Move(start, end, prom='B'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom='B'), self.en_passent
+                        Move(start, end, prom="B"), self.en_passent
                     ).white_in_check:
-                        print("Bishop prom added!")
-                        moves.append(Move(start, end, prom='B'))
+                        moves.append(Move(start, end, prom="B"))
                     # Promotion to knight
-                    print(
-                        f"Knight prom: {self.board.board_after_move(Move(start, end, prom='N'), self.en_passent).white_in_check}")
                     if not self.board.board_after_move(
-                            Move(start, end, prom='N'), self.en_passent
+                        Move(start, end, prom="N"), self.en_passent
                     ).white_in_check:
-                        print("Knight prom added!")
-                        moves.append(Move(start, end, prom='N'))
+                        moves.append(Move(start, end, prom="N"))
                 else:
                     if not self.board.board_after_move(
-                            Move(start, end), self.en_passent
+                        Move(start, end), self.en_passent
                     ).white_in_check:
                         moves.append(Move(start, end))
         else:
             for end in ends:
-                if piece == 'p' and end.rank == 1:
+                if isinstance(piece_o, pieces.BlackPawn) and end.rank == 1:
                     # Promotion to Queen
                     if not self.board.board_after_move(
-                            Move(start, end, prom='q'), self.en_passent
+                        Move(start, end, prom="q"), self.en_passent
                     ).black_in_check:
-                        moves.append(Move(start, end, prom='q'))
+                        moves.append(Move(start, end, prom="q"))
                     # Promotion to rook
                     if not self.board.board_after_move(
-                            Move(start, end, prom='r'), self.en_passent
+                        Move(start, end, prom="r"), self.en_passent
                     ).black_in_check:
-                        moves.append(Move(start, end, prom='r'))
+                        moves.append(Move(start, end, prom="r"))
                     # Promotion to Bishop
                     if not self.board.board_after_move(
-                            Move(start, end, prom='b'), self.en_passent
+                        Move(start, end, prom="b"), self.en_passent
                     ).black_in_check:
-                        moves.append(Move(start, end, prom='b'))
+                        moves.append(Move(start, end, prom="b"))
                     # Promotion to knight
                     if not self.board.board_after_move(
-                            Move(start, end, prom='n'), self.en_passent
+                        Move(start, end, prom="n"), self.en_passent
                     ).black_in_check:
-                        moves.append(Move(start, end, prom='n'))
+                        moves.append(Move(start, end, prom="n"))
                 else:
                     if not self.board.board_after_move(
-                            Move(start, end), self.en_passent
+                        Move(start, end), self.en_passent
                     ).black_in_check:
                         moves.append(Move(start, end))
         return moves
 
     def generate_moves(self):
+        print(self.en_passent)
         moves = set()
         for i in range(len(self.board.squares)):
             x = (i % 8) + 1
             y = (i // 8) + 1
             start = Square(x, y)
             piece = self.board.piece_at(start)
-            if piece is None:
+            if piece == pieces.EMPTY_SQUARE:
                 continue
             if pieces.PIECES[piece]().colour != self.on_move:
                 continue
@@ -408,42 +429,46 @@ class Game:
         piece = self.board.piece_at(move.start)
         new_game = Game(self.fen())
         capture = False
-        if new_game.board.piece_at(move.end):
+        if new_game.board.piece_at(move.end) != pieces.EMPTY_SQUARE:
             capture = True
         new_game.board = new_game.board.board_after_move(move, self.en_passent)
         new_game.board.check_check()
 
+        piece_o = pieces.PIECES[piece]()
         # on_move changes and 50 mr
         new_game.on_move = self.on_move * -1
         if new_game.on_move == 1:
             new_game.full_move_count += 1
         new_game.en_passent = None
-        if piece == "p" or piece == "P":
+        new_game.board.remove_en_passent()
+        if isinstance(piece_o, pieces.Pawn):
             new_game.fifty_mr = 0
             if move.end.rank - move.start.rank == 2:
                 new_game.en_passent = move.start.delta(0, 1)
+                new_game.board.set_en_passent(new_game.en_passent)
             elif move.end.rank - move.start.rank == -2:
                 new_game.en_passent = move.start.delta(0, -1)
+                new_game.board.set_en_passent(new_game.en_passent)
         elif capture:
             new_game.fifty_mr = 0
         else:
             new_game.fifty_mr += 1
 
         # update castle rights
-        if piece == "r":
+        if isinstance(piece_o, pieces.BlackRook):
             if move.start.file == 1:
                 new_game.castles["q"] = False
             elif move.start.file == 8:
                 new_game.castles["k"] = False
-        elif piece == "k":
+        elif isinstance(piece_o, pieces.BlackKing):
             new_game.castles["q"] = False
             new_game.castles["k"] = False
-        elif piece == "R":
+        elif isinstance(piece_o, pieces.WhiteRook):
             if move.start.file == 1:
                 new_game.castles["Q"] = False
             elif move.start.file == 8:
                 new_game.castles["K"] = False
-        elif piece == "K":
+        elif isinstance(piece_o, pieces.WhiteKing):
             new_game.castles["Q"] = False
             new_game.castles["K"] = False
 
@@ -458,4 +483,16 @@ class Game:
 
     @property
     def game_over(self):
-        return len(self.generate_moves()) < 1
+        return len(self.generate_moves()) < 1 or self.fifty_mr >= 50
+
+    def result(self):
+        if self.fifty_mr >= 50:
+            return 0
+        if len(self.generate_moves()) < 1:
+            if self.on_move == 1:
+                if self.board.black_in_check:
+                    return 1
+            else:
+                if self.board.white_in_check:
+                    return -1
+            return 0

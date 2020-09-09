@@ -1,10 +1,8 @@
-WHITE_PIECES = frozenset("PRNBKQ")
-BLACK_PIECES = frozenset("prnbkq")
-WHITE_PROMOTIONS = WHITE_PIECES - set("P")
-BLACK_PROMOTIONS = BLACK_PIECES - set("p")
-
-KNIGHTMOVESX = [-2, -2, -1, -1, 1, 1, 2, 2]
-KNIGHTMOVESY = [-1, 1, -2, 2, -2, 2, -1, 1]
+EMPTY_SQUARE = 0
+WHITE_PIECES = frozenset([1, 2, 3, 4, 5, 6])
+BLACK_PIECES = frozenset([-1, -2, -3, -4, -5, -6])
+WHITE_PROMOTIONS = WHITE_PIECES - {6}
+BLACK_PROMOTIONS = BLACK_PIECES - {-6}
 
 
 def colour_of_piece(piece):
@@ -48,7 +46,7 @@ class Piece:
                 break
 
             piece_at_pos = board.piece_at(pos)
-            if piece_at_pos is None:
+            if piece_at_pos == 0:
                 ends.append(pos)
             else:
                 if can_take and colour_of_piece(piece_at_pos) != self.colour:
@@ -58,11 +56,10 @@ class Piece:
 
     @property
     def colour(self):
-        return colour_of_piece(self.fen)
+        return colour_of_piece(PIECES_FENS[self.fen])
 
 
 class Knight(Piece):
-
     def move_squares(self, board, start):
         ends = set()
         for x in (1, -1):
@@ -207,18 +204,46 @@ class BlackPawn(Pawn):
     fen = "p"
 
 
-# TODO remove all the black/white classes, fix fen
+class EnPassentTarget(Piece):
+    fen = "E"
+
+    def move_squares(self, board, start):
+        ends = set()
+        return ends
+
+    def threat_squares(self, board, start):
+        ends = set()
+        return ends
+
+
+# TODO this is horrible.
+PIECES_FENS = {
+    "K": 1,
+    "Q": 2,
+    "R": 3,
+    "B": 4,
+    "N": 5,
+    "P": 6,
+    "k": -1,
+    "q": -2,
+    "r": -3,
+    "b": -4,
+    "n": -5,
+    "p": -6,
+    "E": 7,
+}
 PIECES = {
-    "P": WhitePawn,
-    "B": WhiteBishop,
-    "N": WhiteKnight,
-    "R": WhiteRook,
-    "Q": WhiteQueen,
-    "K": WhiteKing,
-    "p": BlackPawn,
-    "b": BlackBishop,
-    "n": BlackKnight,
-    "r": BlackRook,
-    "q": BlackQueen,
-    "k": BlackKing,
+    1: WhiteKing,
+    2: WhiteQueen,
+    3: WhiteRook,
+    4: WhiteBishop,
+    5: WhiteKnight,
+    6: WhitePawn,
+    -1: BlackKing,
+    -2: BlackQueen,
+    -3: BlackRook,
+    -4: BlackBishop,
+    -5: BlackKnight,
+    -6: BlackPawn,
+    7: EnPassentTarget,
 }
