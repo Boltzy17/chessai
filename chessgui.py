@@ -1,7 +1,9 @@
 from PIL import Image, ImageTk
 
 import tkinter as tk
-import numpy as np
+# import numpy as np
+
+import random
 
 from eventhandler import EventHandler
 from env import ChessEnvironment
@@ -60,11 +62,11 @@ class ChessGUI:
             self.env.move(self.move_var.get())
             print(f"check = {self.env.game.in_check}")
             self.move_var.set("")
-            self.game_label.configure(foreground="black", text = "Game Playing")
+            self.game_label.configure(foreground="black", text="Game Playing")
             self.set_valid_move(False)
             self.after_move()
         else:
-            self.game_label.configure(foreground = "red")
+            self.game_label.configure(foreground="red")
 
     def get_game_result(self):
         res = self.env.result
@@ -78,7 +80,7 @@ class ChessGUI:
 
     def play_random_move(self):
         if len(self.env.possible_moves) > 0:
-            rand = np.random.randint(len(self.env.possible_moves))
+            rand = random.randint(0, len(self.env.possible_moves))
             self.env.move(self.env.possible_moves_str[rand])
             self.on_update()
         else:
@@ -111,18 +113,18 @@ class ChessGUI:
         self.on_update()
 
     def on_update(self):
-        self.load_board()
+        self.load_board(self.env.game.board.fen())
         self.tk_image = ImageTk.PhotoImage(self.play_board)
         self.board_label.configure(image=self.tk_image)
 
-    def load_board(self):
+    def load_board(self, fen):
         self.play_board = self.board.copy()
-        rows = self.env.game.board.fen().split('/')
+        rows = fen.split("/")
         ycount = 0
         for row in rows:
             xcount = 0
             for char in list(row):
-                if '1' <= char <= '8':
+                if "1" <= char <= "8":
                     for _ in range(int(char)):
                         xcount += 1
                 else:
@@ -138,21 +140,22 @@ class ChessGUI:
 
     def load_piece_images(self):
         pieces = {
-            'P': Image.open("./resources/images/pawn.png"),
-            'N': Image.open("./resources/images/knight.png"),
-            'B': Image.open("./resources/images/bishop.png"),
-            'R': Image.open("./resources/images/rook.png"),
-            'Q': Image.open("./resources/images/queen.png"),
-            'K': Image.open("./resources/images/king.png"),
-            'p': Image.open("./resources/images/pawnb.png"),
-            'n': Image.open("./resources/images/knightb.png"),
-            'b': Image.open("./resources/images/bishopb.png"),
-            'r': Image.open("./resources/images/rookb.png"),
-            'q': Image.open("./resources/images/queenb.png"),
-            'k': Image.open("./resources/images/kingb.png"),
-            'E': Image.open("./resources/images/EP.png")
+            "P": Image.open("./resources/images/pawn.png"),
+            "N": Image.open("./resources/images/knight.png"),
+            "B": Image.open("./resources/images/bishop.png"),
+            "R": Image.open("./resources/images/rook.png"),
+            "Q": Image.open("./resources/images/queen.png"),
+            "K": Image.open("./resources/images/king.png"),
+            "p": Image.open("./resources/images/pawnb.png"),
+            "n": Image.open("./resources/images/knightb.png"),
+            "b": Image.open("./resources/images/bishopb.png"),
+            "r": Image.open("./resources/images/rookb.png"),
+            "q": Image.open("./resources/images/queenb.png"),
+            "k": Image.open("./resources/images/kingb.png"),
+            "E": Image.open("./resources/images/EP.png"),
         }
         return pieces
 
 
-cg = ChessGUI(1200, 800)
+if __name__ == "__main__":
+    cg = ChessGUI(1200, 800)
